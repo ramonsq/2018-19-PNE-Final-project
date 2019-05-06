@@ -73,6 +73,7 @@ class MyServer(BaseHTTPRequestHandler):
             return False
 
     def do_GET(self):
+        global contents
         termcolor.cprint(self.requestline + "\n", 'green')
         action = self.path.split("?")[0]
     # ------------------------------------------------------------------> INDEX PAGE
@@ -83,12 +84,13 @@ class MyServer(BaseHTTPRequestHandler):
         elif action == "/listSpecies":
             input_value = self.get_input_value()
             try:
-                if input_value:
+                if isinstance(input_value, str):
                     list_of_species = self.list_species(int(input_value))
                 else:
                     list_of_species = self.list_species("all")
                 if self.JSON:
-                    contents = json.dumps(list_of_species)
+                    data = {'list_of_species': list_of_species}
+                    contents = json.dumps(data, sort_keys=True, indent=4)
                 else:
                     file = open("listSpecies.html", "r")
                     contents = file.read()
@@ -106,10 +108,10 @@ class MyServer(BaseHTTPRequestHandler):
             file = open("karyotype.html", "r")
             contents = file.read()
             input_value = self.get_input_value()
-            if input_value:
+            if isinstance(input_value, str):
                 kt = self.karyotype(input_value)
                 if self.JSON:
-                    contents = json.dumps(kt)
+                    contents = json.dumps(kt, sort_keys=True, indent=4)
                 else:
                     contents += "Karyotype of " + input_value.upper() + ":<ul>"
                     if not isinstance(kt, list):
@@ -131,7 +133,7 @@ class MyServer(BaseHTTPRequestHandler):
             if input_value:
                 specie, chromo = input_value
                 if self.JSON:
-                    contents = json.dumps(self.chromosomeLength(specie, chromo.upper()))
+                    contents = json.dumps(self.chromosomeLength(specie, chromo.upper()), sort_keys=True, indent=4)
                 else:
                     contents += "The Chromosome " + chromo.upper() + " lenght of " + specie.upper() + ": "
                     chrom_len = self.chromosomeLength(specie, chromo.upper())
@@ -145,10 +147,10 @@ class MyServer(BaseHTTPRequestHandler):
             file = open("geneSeq.html", "r")
             contents = file.read()
             input_value = self.get_input_value()
-            if input_value:
+            if isinstance(input_value, str):
                 gene = input_value
                 if self.JSON:
-                    contents = json.dumps(self.geneSeq(gene.upper()))
+                    contents = json.dumps(self.geneSeq(gene.upper()), sort_keys=True, indent=4)
                 else:
                     contents += "Sequence of human gene " + gene.upper() + ": "
                     seq = self.geneSeq(gene.upper())
@@ -164,10 +166,10 @@ class MyServer(BaseHTTPRequestHandler):
             file = open("geneInfo.html", "r")
             contents = file.read()
             input_value = self.get_input_value()
-            if input_value:
+            if isinstance(input_value, str):
                 gene = input_value
                 if self.JSON:
-                    contents = json.dumps(self.geneInfo(gene.upper()))
+                    contents = json.dumps(self.geneInfo(gene.upper()), sort_keys=True, indent=4)
                 else:
                     contents += "<h2>Information about human gene " + gene.upper() + ":</h2>"
                     gene_info = self.geneInfo(gene.upper())
@@ -186,10 +188,10 @@ class MyServer(BaseHTTPRequestHandler):
             file = open("geneCalc.html", "r")
             contents = file.read()
             input_value = self.get_input_value()
-            if input_value:
+            if isinstance(input_value, str):
                 gene = input_value
                 if self.JSON:
-                    contents = json.dumps(self.geneCalc(gene.upper()))
+                    contents = json.dumps(self.geneCalc(gene.upper()), sort_keys=True, indent=4)
                 else:
                     contents += "<h2>Information about human gene " + gene.upper() + " bases:</h2>"
                     bases = self.geneCalc(gene.upper())
@@ -216,7 +218,7 @@ class MyServer(BaseHTTPRequestHandler):
             if input_value:
                 chromo, start, end = self.get_list_input()
                 if self.JSON:
-                    contents = json.dumps(self.geneList(chromo, start, end))
+                    contents = json.dumps(self.geneList(chromo, start, end), sort_keys=True, indent=4)
                 else:
                     contents += "<h2>Genes located in the chromosome " + chromo.upper() + " </h2>"
                     names = self.geneList(chromo, start, end)
@@ -240,11 +242,12 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
         else:
             self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(str.encode(contents)))
-            self.end_headers()
-            self.wfile.write(str.encode(contents))
+        self.send_header('Content-Length', len(str.encode(contents)))
+        self.end_headers()
+        self.wfile.write(str.encode(contents))
 
 # ---------------------------------------------------------------------------------
+
     def list_species(self, limit):
         server = "https://rest.ensembl.org"
         ext = "/info/species?"

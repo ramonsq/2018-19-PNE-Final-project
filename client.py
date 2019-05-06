@@ -14,8 +14,8 @@ else:
 r = requests.get(SERVER+endpoint, headers={"Content-Type": "application/json"})
  
 if not r.ok:
-  r.raise_for_status()
-  sys.exit()
+    r.raise_for_status()
+    sys.exit()
  
 decoded = r.json()
 print(repr(decoded))
